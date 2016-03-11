@@ -43,3 +43,77 @@ mutual_novels(A) :-
 
 
 /******************************* PART 3 **************************************/
+
+% switch sides
+opposite(right,left).
+opposite(left,right).
+
+% state definitions
+state(left,left,left,left).
+state(left,left,left,right).
+state(left,left,right,left).
+state(left,left,right,right).
+state(left,right,left,left).
+state(left,right,left,right).
+state(left,right,right,left).
+state(left,right,right,right).
+state(right,left,left,left).
+state(right,left,left,right).
+state(right,left,right,left).
+state(right,left,right,right).
+state(right,right,left,left).
+state(right,right,left,right).
+state(right,right,right,left).
+state(right,right,right,right).
+
+% the wolf is left with the goat -- FARMER SCREWED UP
+unsafe(state(left,right,right,_)).
+unsafe(state(right,left,left,_)).
+
+% the goat is left with the cabbage -- FARMER SCREWED UP
+unsafe(state(left,_,right,right)).
+unsafe(state(right,_,left,left)).
+
+% safe definition
+safe(A):- \+ unsafe(A).
+
+take(farmer,left,right).
+take(farmer,right,left).
+take(wolf,left,right).
+take(wolf,right,left).
+take(goat,left,right).
+take(goat,right,left).
+take(cabbage,left,right).
+take(cabbage,right,left).
+
+% defining the valid moves, based on Prolog slides
+arc(take(wolf,Side1,Side2),state(Side1,Side1,G,C),state(Side2,Side2,G,C)):-
+    opposite(Side1,Side2),safe(state(Side2,Side2,G,C)).
+
+arc(take(goat,Side1,Side2),state(Side1,W,Side1,C),state(Side2,W,Side2,C)):-
+    opposite(Side1,Side2),safe(state(Side2,W,Side2,C)).
+    
+arc(take(cabbage,Side1,Side2),state(Side1,W,G,Side1),state(Side2,W,G,Side2)):-
+    opposite(Side1,Side2),safe(state(Side2,W,G,Side2)).
+
+arc(take(none,Side1,Side2),state(Side1,W,G,C),state(Side2,W,G,C)):-
+    opposite(Side1,Side2),safe(state(Side2,W,G,C)).
+    
+% ACTUALLY DOIN THE PUZZLE NOW %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% base case means the states are the same, and we dont care about the path
+go(A,A,_,[]):- !.
+
+% need to define go recursively
+go(A,B,Path,[M|Moves]):-
+    % move the things between the banks
+    arc(M,A,A1),
+    \+ member(A1,Path),
+    go(A1,B,[A|Path],Moves).
+    
+% RUNNING THE PROGRAM TO TEST IT %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+solve :-
+    go(state(left, left, left, left), state(right, right, right, right), [], M),
+    helperWrite(M),!.
+    
+helperWrite([H|[]]):-  write(H).
+helperWrite([H|T]):- write(H), nl, helperWrite(T).
